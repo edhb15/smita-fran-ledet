@@ -17,6 +17,9 @@
   const cellX = i => (i + PX0 + 0.5 - OX) * S, cellZ = j => (j + PY0 + 0.5 - OY) * S;
   const MINX = X(PX0), MAXX = X(PX1), MINZ = Z(PY0), MAXZ = Z(PY1);
   let seed = 11, time = 0;
+  // Förstapersonsvy (sparas mellan gångerna)
+  let fp = false, fpYaw = 0;
+  try { fp = localStorage.getItem('smita-fp') === '1'; } catch (e) { }
   const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
   const pick = a => a[Math.floor(rnd() * a.length)];
   const W = pts => pts.map(p => [X(p[0]), Z(p[1])]);
@@ -1296,6 +1299,12 @@
     let tx = (PXof(teacher.x) - ppx) * sc + MINI / 2, ty = (PYof(teacher.z) - ppy) * sc + MINI / 2;
     tx = Math.max(5, Math.min(MINI - 5, tx)); ty = Math.max(5, Math.min(MINI - 5, ty));
     dot(mini, tx, ty, 4.5, '#7048e8');
+    if (fp) {
+      const yaw = player.car ? player.car.h : fpYaw;
+      mini.strokeStyle = '#ffd43b'; mini.lineWidth = 3; mini.beginPath(); mini.moveTo(MINI / 2, MINI / 2);
+      mini.lineTo(MINI / 2 + Math.sin(yaw) * 16, MINI / 2 + Math.cos(yaw) * 16); mini.stroke();
+      mini.strokeStyle = '#000'; mini.lineWidth = 1.5;
+    }
     dot(mini, MINI / 2, MINI / 2, 5, '#ffd43b');
   }
   // Stor karta (tryck på minikartan)
@@ -1316,6 +1325,15 @@
   miniCv.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (state === 'line' || state === 'free') showBigMap(); });
   $('bigmap').addEventListener('pointerdown', e => { e.preventDefault(); $('bigmap').classList.add('hidden'); paused = false; last = performance.now(); });
   const muteBtn = $('mutebtn');
+  const viewBtn = $('viewbtn');
+  const updView = () => { viewBtn.textContent = fp ? '🎥' : '👀'; viewBtn.setAttribute('aria-label', fp ? 'Byt till vy ovanifrån' : 'Byt till förstapersonsvy'); };
+  function toggleView() {
+    fp = !fp; if (fp) fpYaw = player.car ? player.car.h : player.rot;
+    try { localStorage.setItem('smita-fp', fp ? '1' : '0'); } catch (e) { }
+    updView();
+  }
+  updView();
+  viewBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); toggleView(); });
   const updMute = () => { muteBtn.textContent = Snd.isMuted() ? '🔇' : '🔊'; };
   updMute();
   muteBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); Snd.init(); Snd.setMuted(!Snd.isMuted()); updMute(); });
@@ -1513,6 +1531,7 @@
     setIcon(teacher.mesh.userData.icon, null);
     $('time').textContent = 0; $('itemwrap').classList.add('hidden');
     camTarget.set(player.x, 0, player.z);
+    fpYaw = WALK_ROT;
     Snd.engine(-1);
   }
 
@@ -1614,6 +1633,7 @@
     keys[e.code] = true;
     if (e.code === 'Space' || e.code === 'KeyE') useItem();
     if ((e.code === 'KeyF' || e.code === 'Enter') && !e.repeat) toggleRide();
+    if (e.code === 'KeyV' && !e.repeat) toggleView();
     if (e.code === 'KeyM' && !e.repeat) { Snd.init(); Snd.setMuted(!Snd.isMuted()); updMute(); }
     if (e.code === 'KeyK' && !e.repeat) { if (paused) { $('bigmap').classList.add('hidden'); paused = false; last = performance.now(); } else if (state === 'line' || state === 'free') showBigMap(); }
   });
@@ -1668,6 +1688,17 @@
     if (keys.ArrowLeft || keys.KeyA) ix -= 1; if (keys.ArrowRight || keys.KeyD) ix += 1;
     if (keys.ArrowUp || keys.KeyW) iz -= 1; if (keys.ArrowDown || keys.KeyS) iz += 1;
     let l = Math.hypot(ix, iz); if (l > 1) { ix /= l; iz /= l; l = 1; }
+    // Förstapersonsvy: upp/ner går framåt/bakåt, vänster/höger svänger
+    if (fp) {
+      const f = -iz;
+      if (player.car) {
+        const tgt = player.car.h - ix * 1.2, g = Math.max(0, f);
+        ix = Math.sin(tgt) * g; iz = Math.cos(tgt) * g; l = g;
+      } else {
+        if (player.stun <= 0 && player.phone <= 0) fpYaw -= ix * 2.4 * dt;
+        ix = Math.sin(fpYaw) * f; iz = Math.cos(fpYaw) * f; l = Math.abs(f);
+      }
+    }
     for (const k of ['boost', 'slow', 'skate', 'bun']) if (player[k] > 0) player[k] -= dt;
     skate.visible = player.skate > 0;
     if (player.invis > 0) { player.invis -= dt; if (player.invis <= 0) { setPlayerAlpha(1); if (teacher.state === 'confused') teacher.state = 'search'; say('Kepsen slutade fungera!', 1.4); } }
@@ -1876,13 +1907,26 @@
   }
 
   function syncMeshes() {
+    if (fp && !player.car && player.stun <= 0) player.rot = fpYaw;
+    player.mesh.visible = !player.car && !fp;
     for (const e of [player, teacher, ...students]) { e.mesh.position.x = e.x; e.mesh.position.z = e.z; e.mesh.rotation.y = e.rot; }
     player.mesh.position.y = player.y;
     youLabel.position.set(player.x, player.y + 2.9 + Math.sin(time * 4) * 0.12, player.z);
-    youLabel.visible = state !== 'menu';
+    youLabel.visible = state !== 'menu' && !fp;
   }
 
   function updateCamera(dt) {
+    const fov = fp ? 72 : 50;
+    if (camera.fov !== fov) { camera.fov = fov; camera.near = fp ? 0.1 : 0.5; camera.updateProjectionMatrix(); }
+    if (fp) {
+      const yaw = player.car ? player.car.h : fpYaw, eye = player.car ? 1.35 : 1.55 + (player.skate > 0 ? 0.15 : 0), fwd = player.car ? 0.3 : 0.2;
+      camera.position.set(player.x + Math.sin(yaw) * fwd, player.y + eye, player.z + Math.cos(yaw) * fwd);
+      camera.lookAt(player.x + Math.sin(yaw) * 10, player.y + eye - 1.1, player.z + Math.cos(yaw) * 10);
+      camTarget.set(player.x, 0, player.z);
+      sun.position.set(camTarget.x + 25, 50, camTarget.z + 15); sun.target.position.copy(camTarget);
+      seeU.uR.value = 0;
+      return;
+    }
     const portrait = camera.aspect < 0.9;
     camOff.set(0, portrait ? 27 : 19, portrait ? 21 : 16);
     camTarget.lerp(tmpV.set(player.x, 0, player.z), 1 - Math.exp(-dt * 5));

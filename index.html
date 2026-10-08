@@ -81,6 +81,22 @@
         cursor: pointer
     }
 
+    #viewbtn {
+        position: fixed;
+        z-index: 3;
+        left: calc(12px + env(safe-area-inset-left));
+        top: calc(206px + env(safe-area-inset-top));
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, .8);
+        background: rgba(0, 0, 0, .35);
+        font-size: 22px;
+        touch-action: none;
+        cursor: pointer;
+        padding: 0
+    }
+
     #mutebtn {
         position: fixed;
         z-index: 3;
@@ -401,6 +417,7 @@
         <span id="wx">☁️</span>
     </div>
     <button id="mutebtn" aria-label="Ljud av/på">🔊</button>
+    <button id="viewbtn" aria-label="Byt till förstapersonsvy">👀</button>
     <div id="status" class="hud"></div>
     <canvas id="mini" class="hud" width="130" height="130">
     </canvas>
@@ -439,6 +456,7 @@
                 <li>Hitta en parkerad bil 🚗 och kör själv i 10 sekunder, sen tar bensinen slut ⛽</li>
                 <li>Vädret i spelet är samma som i Göteborg just nu, och det påverkar hur bra läraren ser.</li>
                 <li>Styr: dra med fingret på skärmen (eller piltangenterna). Släpper du stannar du. Tryck på den gula knappen för att använda en grej. Tryck på minikartan för att se hela stan. 🔊 stänger av ljudet.</li>
+                <li>👀-knappen (eller V) byter till förstapersonsvy. Då går du framåt och bakåt med spaken och svänger åt sidorna. 🎥 tar dig tillbaka till vyn ovanifrån.</li>
             </ul>
             <h2 class="pickh">Välj din gubbe</h2>
             <div id="picker"></div>
@@ -459,9 +477,9 @@
     </div>
 
     <script src="lib/three.min.js"></script>
-    <script src="map.js?v=8"></script>
-    <script src="audio.js?v=8"></script>
-    <script src="weather.js?v=8"></script>
-    <script src="game.js?v=8"></script>
+    <script src="map.js?v=9"></script>
+    <script src="audio.js?v=9"></script>
+    <script src="weather.js?v=9"></script>
+    <script src="game.js?v=9"></script>
 </body>
 </html>
