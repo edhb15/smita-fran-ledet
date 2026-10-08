@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="sv">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="robots" content="noindex">
+    <title>Smita från ledet</title>
+    <style>
+    html, body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        overscroll-behavior: none
+    }
+
+    canvas {
+        display: block;
+        width: 100%;
+        height: 100%
+    }
+
+    #touch {
+        position: fixed;
+        inset: 0;
+        z-index: 1
+    }
+
+    .hud {
+        position: fixed;
+        z-index: 2;
+        pointer-events: none;
+        color: #fff;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, .6)
+    }
+
+    #stats {
+        top: calc(10px + env(safe-area-inset-top));
+        left: calc(12px + env(safe-area-inset-left));
+        font-weight: 800;
+        font-size: 20px;
+        line-height: 1.35;
+        background: rgba(0, 0, 0, .35);
+        padding: 8px 12px;
+        border-radius: 12px
+    }
+
+    #status {
+        top: calc(10px + env(safe-area-inset-top));
+        left: 50%;
+        transform: translateX(-50%);
+        font-weight: 800;
+        font-size: 18px;
+        background: rgba(0, 0, 0, .45);
+        padding: 8px 16px;
+        border-radius: 999px;
+        white-space: nowrap;
+        max-width: 60vw;
+        overflow: hidden;
+        text-overflow: ellipsis
+    }
+
+    #mini {
+        top: calc(10px + env(safe-area-inset-top));
+        right: calc(10px + env(safe-area-inset-right));
+        width: 130px;
+        height: 130px;
+        border-radius: 12px;
+        border: 3px solid rgba(255, 255, 255, .8);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .4)
+    }
+
+    #mini {
+        pointer-events: auto;
+        cursor: pointer
+    }
+
+    #mutebtn {
+        position: fixed;
+        z-index: 3;
+        left: calc(12px + env(safe-area-inset-left));
+        top: calc(150px + env(safe-area-inset-top));
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, .8);
+        background: rgba(0, 0, 0, .35);
+        font-size: 22px;
+        touch-action: none;
+        cursor: pointer;
+        padding: 0
+    }
+
+    #bigmap {
+        flex-direction: column;
+        gap: 10px;
+        color: #fff;
+        font-weight: 800;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, .6)
+    }
+
+    #bigcv {
+        border-radius: 14px;
+        border: 4px solid #fff;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, .5);
+        max-width: 100%
+    }
+
+    .wxline {
+        background: #e7f1fb;
+        border-radius: 14px;
+        padding: 10px 14px;
+        font-size: 16px;
+        line-height: 1.4;
+        margin: 0 0 16px
+    }
+
+    #msg {
+        top: 28%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: clamp(20px, 4vw, 34px);
+        font-weight: 900;
+        text-align: center;
+        background: rgba(20, 20, 40, .75);
+        padding: 14px 22px;
+        border-radius: 18px;
+        opacity: 0;
+        transition: opacity .25s;
+        max-width: 86vw
+    }
+
+    #msg.show {
+        opacity: 1
+    }
+
+    #itemwrap {
+        position: fixed;
+        z-index: 3;
+        right: calc(22px + env(safe-area-inset-right));
+        bottom: calc(22px + env(safe-area-inset-bottom));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px
+    }
+
+    #itembtn {
+        width: 118px;
+        height: 118px;
+        border-radius: 50%;
+        border: 5px solid #fff;
+        background: radial-gradient(circle at 35% 30%, #ffe066, #f08c00);
+        font-size: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, .45);
+        touch-action: none;
+        cursor: pointer
+    }
+
+    #itembtn.empty {
+        background: rgba(80, 80, 80, .55);
+        font-size: 30px;
+        color: #ddd
+    }
+
+    #badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: #e03131;
+        color: #fff;
+        font-size: 20px;
+        font-weight: 900;
+        border-radius: 999px;
+        min-width: 30px;
+        height: 30px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid #fff
+    }
+
+    #itemname {
+        color: #fff;
+        font-weight: 800;
+        font-size: 15px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, .7);
+        pointer-events: none;
+        text-align: center
+    }
+
+    #nextbar {
+        width: 118px;
+        height: 10px;
+        border-radius: 5px;
+        background: rgba(0, 0, 0, .4);
+        overflow: hidden;
+        pointer-events: none
+    }
+
+    #nextfill {
+        height: 100%;
+        width: 0;
+        background: #69db7c
+    }
+
+    #joyb, #joyk {
+        position: fixed;
+        z-index: 2;
+        pointer-events: none;
+        border-radius: 50%;
+        display: none;
+        transform: translate(-50%, -50%)
+    }
+
+    #joyb {
+        width: 130px;
+        height: 130px;
+        background: rgba(255, 255, 255, .18);
+        border: 3px solid rgba(255, 255, 255, .55)
+    }
+
+    #joyk {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, .8)
+    }
+
+    .ov {
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(10, 20, 40, .6);
+        padding: 16px;
+        box-sizing: border-box
+    }
+
+    .card {
+        background: #fff8e7;
+        color: #222;
+        border-radius: 24px;
+        padding: 24px 26px;
+        max-width: 520px;
+        width: 100%;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, .5);
+        text-align: center;
+        max-height: 92vh;
+        overflow: auto
+    }
+
+    .card h1 {
+        margin: 0 0 4px;
+        font-size: 36px;
+        color: #c2410c
+    }
+
+    .card h2 {
+        margin: 0 0 14px;
+        font-size: 18px;
+        color: #555;
+        font-weight: 700
+    }
+
+    .card ul {
+        text-align: left;
+        padding-left: 20px;
+        font-size: 17px;
+        line-height: 1.45;
+        margin: 0 0 18px
+    }
+
+    .btn {
+        font: inherit;
+        font-size: 26px;
+        font-weight: 900;
+        color: #fff;
+        background: #2f9e44;
+        border: 0;
+        border-radius: 16px;
+        padding: 14px 40px;
+        box-shadow: 0 5px 0 #237032;
+        cursor: pointer
+    }
+
+    .btn:active {
+        transform: translateY(3px);
+        box-shadow: 0 2px 0 #237032
+    }
+
+    .big {
+        font-size: 22px;
+        margin: 8px 0 18px
+    }
+
+    #ridebtn {
+        position: fixed;
+        z-index: 3;
+        right: calc(16px + env(safe-area-inset-right));
+        bottom: calc(205px + env(safe-area-inset-bottom));
+        font: inherit;
+        font-size: 24px;
+        font-weight: 900;
+        color: #fff;
+        background: #1c7ed6;
+        border: 4px solid #fff;
+        border-radius: 999px;
+        padding: 12px 22px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, .45);
+        touch-action: none;
+        cursor: pointer;
+        animation: pulse 1s infinite alternate
+    }
+
+    @keyframes pulse {
+        to {
+            transform: scale(1.07)
+        }
+    }
+
+    .hidden {
+        display: none !important
+    }
+
+    a.back {
+        display: inline-block;
+        margin-top: 14px;
+        color: #555;
+        font-size: 15px
+    }
+    </style>
+</head>
+<body>
+    <canvas id="c">
+    </canvas>
+    <div id="touch"></div>
+    <div id="stats" class="hud">
+        ⏱ 
+        <span id="time">0</span>
+         s
+        <br>
+        🏆 
+        <span id="best">0</span>
+         s
+        <br>
+        🥐 
+        <span id="buns">0</span>
+        <br>
+        <span id="wx">☁️</span>
+    </div>
+    <button id="mutebtn" aria-label="Ljud av/på">🔊</button>
+    <div id="status" class="hud"></div>
+    <canvas id="mini" class="hud" width="130" height="130">
+    </canvas>
+    <div id="msg" class="hud"></div>
+    <div id="joyb"></div>
+    <div id="joyk"></div>
+    <button id="ridebtn" class="hidden"></button>
+    <div id="itemwrap" class="hidden">
+        <div id="itembtn" class="empty">
+            –
+            <div id="badge"></div>
+        </div>
+        <div id="itemname">Ingen grej än</div>
+        <div id="nextbar">
+            <div id="nextfill"></div>
+        </div>
+    </div>
+
+    <div id="bigmap" class="ov hidden">
+        <canvas id="bigcv"></canvas>
+        <div>Tryck var som helst för att spela vidare</div>
+    </div>
+
+    <div id="menu" class="ov">
+        <div class="card">
+            <h1>Smita från ledet</h1>
+            <h2>En klassutflykt genom Göteborg</h2>
+            <p class="wxline" id="wxmenu">Hämtar vädret i Göteborg…</p>
+            <ul>
+                <li>Du går i ett led med klassen uppför Avenyn, från Götaplatsen mot Kungsportsplatsen.</li>
+                <li>Smit när läraren inte tittar! Läraren vänder sig om ibland ❗ så skynda dig tillbaka in i ledet.</li>
+                <li>Ser läraren dig springer hen efter dig, och läraren är lite snabbare än du. Göm dig bakom husen!</li>
+                <li>Var 10:e sekund får du en grej att använda: 🍌 🍬 🧢 🎈 🛹 💨. Men läraren får också grejer: 📣 ☕ 🛴 📱</li>
+                <li>Hela Göteborg är med: Haga, Linné, Majorna, Slottsskogen, Liseberg, Ullevi, Nordstan och Hisingen med Lindholmen och Eriksberg. Ät kanelbullar 🥐 för lite extra fart.</li>
+                <li>Hoppa på spårvagnarna 🚋 och Paddan i Vallgraven, men efter 10 sekunder kommer biljettkontrollen 🎫. Färjan Älvsnabben ⛴️ är gratis och tar dig över älven till Lindholmen och Eriksberg.</li>
+                <li>Hitta en parkerad bil 🚗 och kör själv i 10 sekunder, sen tar bensinen slut ⛽</li>
+                <li>Vädret i spelet är samma som i Göteborg just nu, och det påverkar hur bra läraren ser.</li>
+                <li>Styr: dra med fingret på skärmen (eller piltangenterna). Släpper du stannar du. Tryck på den gula knappen för att använda en grej. Tryck på minikartan för att se hela stan. 🔊 stänger av ljudet.</li>
+            </ul>
+            <button class="btn" id="startbtn">Starta!</button>
+            <br>
+            <a class="back" href="/">← Alla spel</a>
+        </div>
+    </div>
+
+    <div id="over" class="ov hidden">
+        <div class="card">
+            <h1>Fångad! 😱</h1>
+            <p class="big" id="overtext"></p>
+            <button class="btn" id="againbtn">Spela igen</button>
+            <br>
+            <a class="back" href="/">← Alla spel</a>
+        </div>
+    </div>
+
+    <script src="lib/three.min.js"></script>
+    <script src="map.js?v=7"></script>
+    <script src="audio.js?v=7"></script>
+    <script src="weather.js?v=7"></script>
+    <script src="game.js?v=7"></script>
+</body>
+</html>
