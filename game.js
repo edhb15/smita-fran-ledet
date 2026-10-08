@@ -932,7 +932,8 @@
     { n: 'Henry', hair: '#2b1d12', skin: '#f1c7a4', shirt: '#1971c2', pants: '#343a40' },
     { n: 'Albert', hair: '#a57149', skin: '#f5d3b8', shirt: '#2f9e44', stripe: '#fcc419', pants: '#343a40' },
     { n: 'Marcos', hair: '#2b1d12', skin: '#e0ac85', shirt: '#2b8a3e', stripe: '#111111', pants: '#212529' },
-    { n: 'Isak', hair: '#2b1d12', skin: '#f1c7a4', shirt: '#161616', pants: '#111111', shoes: '#ffffff', cap: '#161616', capBack: true, shades: true, chain: true }
+    { n: 'Isak', hair: '#2b1d12', skin: '#f1c7a4', shirt: '#161616', pants: '#111111', shoes: '#ffffff', cap: '#161616', capBack: true, shades: true, chain: true },
+    { n: 'Philip', hair: '#f1d16e', skin: '#f5d3b8', shirt: '#f8f9fa', pants: '#8db4dc' }
   ];
   const teacher = ent(person({ teacher: true, skin: '#e8b996', shirt: '#7048e8', pants: '#3b2f63', hair: '#9a9a9a' }), 0.5);
   teacher.mesh.scale.setScalar(1.22);
