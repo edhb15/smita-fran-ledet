@@ -878,7 +878,7 @@
     hipL.position.set(-0.13, 0.68, 0); hipR.position.set(0.13, 0.68, 0);
     shL.position.set(-0.36, 1.22, 0); shR.position.set(0.36, 1.22, 0);
     g.add(hipL, hipR, shL, shR);
-    for (const h of [hipL, hipR]) { mesh(geo.leg, pants, 0, -0.31, 0, h); mesh(geo.shoe, black, 0, -0.62, 0.05, h); }
+    for (const h of [hipL, hipR]) { mesh(geo.leg, pants, 0, -0.31, 0, h); mesh(geo.shoe, o.shoes ? M(o.shoes) : black, 0, -0.62, 0.05, h); }
     for (const s of [shL, shR]) { mesh(geo.arm, shirt, 0, -0.24, 0, s); mesh(geo.hand, skin, 0, -0.52, 0, s); }
     mesh(geo.body, shirt, 0, 0.98, 0, g);
     mesh(geo.head, skin, 0, 1.56, 0, g);
@@ -888,7 +888,13 @@
     if (o.cap) {
       const cm = M(o.cap);
       mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.14, 16), cm, 0, 1.76, 0, g);
-      mesh(Box(0.4, 0.04, 0.3), cm, 0, 1.71, 0.26, g);
+      mesh(Box(0.4, 0.04, 0.3), cm, 0, 1.71, o.capBack ? -0.26 : 0.26, g);
+    }
+    if (o.shades) mesh(Box(0.4, 0.08, 0.04), black, 0, 1.61, 0.26, g);
+    if (o.chain) {
+      const gold = M('#f5c518');
+      mesh(new THREE.TorusGeometry(0.17, 0.025, 6, 16), gold, 0, 1.2, 0.06, g).rotation.x = 1.15;
+      mesh(Box(0.09, 0.11, 0.03), gold, 0, 1.04, 0.18, g);
     }
     if (o.teacher) {
       mesh(new THREE.SphereGeometry(0.14, 10, 8), hair, 0, 1.8, -0.18, g);
@@ -920,7 +926,10 @@
     { n: 'Lily F', hair: '#9a7450', skin: '#f5d3b8', shirt: '#8d44c9', pants: '#1c3d6e' },
     { n: 'Edward', hair: '#7a4a24', skin: '#f1c7a4', shirt: '#2b8a3e', stripe: '#111111', pants: '#343a40' },
     { n: 'August T', hair: '#e9c46a', skin: '#f5d3b8', shirt: '#2b8a3e', stripe: '#111111', pants: '#343a40' },
-    { n: 'Henry', hair: '#2b1d12', skin: '#f1c7a4', shirt: '#1971c2', pants: '#343a40' }
+    { n: 'Henry', hair: '#2b1d12', skin: '#f1c7a4', shirt: '#1971c2', pants: '#343a40' },
+    { n: 'Albert', hair: '#a57149', skin: '#f5d3b8', shirt: '#2f9e44', stripe: '#fcc419', pants: '#343a40' },
+    { n: 'Marcos', hair: '#2b1d12', skin: '#e0ac85', shirt: '#2b8a3e', stripe: '#111111', pants: '#212529' },
+    { n: 'Isak', hair: '#2b1d12', skin: '#f1c7a4', shirt: '#161616', pants: '#111111', shoes: '#ffffff', cap: '#161616', capBack: true, shades: true, chain: true }
   ];
   const teacher = ent(person({ teacher: true, skin: '#e8b996', shirt: '#7048e8', pants: '#3b2f63', hair: '#9a9a9a' }), 0.5);
   teacher.mesh.scale.setScalar(1.22);
@@ -1627,11 +1636,15 @@
     CHARS.forEach((c, k) => {
       const b = document.createElement('button'); b.className = 'pick'; b.type = 'button';
       const cvs = cv(80, 96), g = cvs.getContext('2d');
-      g.fillStyle = c.pants; g.fillRect(24, 62, 32, 32);
+      g.fillStyle = c.pants; g.fillRect(24, 62, 32, 28);
+      g.fillStyle = c.shoes || '#222'; g.fillRect(22, 88, 15, 6); g.fillRect(43, 88, 15, 6);
       g.fillStyle = c.shirt; g.fillRect(18, 38, 44, 28);
       if (c.stripe) { g.fillStyle = c.stripe; g.fillRect(18, 44, 44, 6); g.fillRect(18, 56, 44, 6); }
       g.fillStyle = c.skin; g.beginPath(); g.arc(40, 22, 15, 0, 7); g.fill();
       g.fillStyle = c.hair; g.beginPath(); g.arc(40, 21, 15.5, Math.PI * 1.02, Math.PI * 1.98); g.fill();
+      if (c.cap) { g.fillStyle = c.cap; g.beginPath(); g.arc(40, 19, 16, Math.PI, 0); g.fill(); g.fillRect(c.capBack ? 46 : 18, 15, 16, 4); }
+      if (c.shades) { g.fillStyle = '#111'; g.fillRect(29, 20, 9, 5); g.fillRect(42, 20, 9, 5); g.fillRect(36, 21, 8, 2); }
+      if (c.chain) { g.strokeStyle = '#f5c518'; g.lineWidth = 2.5; g.beginPath(); g.arc(40, 40, 10, 0.25, Math.PI - 0.25); g.stroke(); g.fillStyle = '#f5c518'; g.fillRect(37, 49, 6, 6); }
       const lb = document.createElement('span'); lb.textContent = c.n;
       b.append(cvs, lb);
       const mark = () => pk.querySelectorAll('.pick').forEach((q, i) => q.classList.toggle('on', i === chosen));
