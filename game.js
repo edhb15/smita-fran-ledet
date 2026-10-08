@@ -857,10 +857,23 @@
     hair: new THREE.SphereGeometry(0.29, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), eye: new THREE.SphereGeometry(0.04, 6, 6),
     pack: Box(0.42, 0.46, 0.18)
   };
+  // Randig tröja: två ränder på varje sida av kroppen och armarna
+  const stripeCache = {};
+  function stripeTex(base, stripe) {
+    const k = base + stripe;
+    if (!stripeCache[k]) {
+      const c = cv(16, 16), g = c.getContext('2d');
+      g.fillStyle = base; g.fillRect(0, 0, 16, 16);
+      g.fillStyle = stripe; g.fillRect(0, 3, 16, 4); g.fillRect(0, 10, 16, 4);
+      const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; stripeCache[k] = t;
+    }
+    return stripeCache[k];
+  }
   function person(o) {
     const g = new THREE.Group(), mats = [];
     const M = c => { const m = lam(c); mats.push(m); return m; };
-    const skin = M(o.skin), shirt = M(o.shirt), pants = M(o.pants), hair = M(o.hair), black = M('#222');
+    const skin = M(o.skin), pants = M(o.pants), hair = M(o.hair), black = M('#222');
+    const shirt = o.stripe ? (m => { mats.push(m); return m; })(new THREE.MeshLambertMaterial({ map: stripeTex(o.shirt, o.stripe) })) : M(o.shirt);
     const hipL = new THREE.Group(), hipR = new THREE.Group(), shL = new THREE.Group(), shR = new THREE.Group();
     hipL.position.set(-0.13, 0.68, 0); hipR.position.set(0.13, 0.68, 0);
     shL.position.set(-0.36, 1.22, 0); shR.position.set(0.36, 1.22, 0);
@@ -894,13 +907,37 @@
     u.hipL.rotation.x = a; u.hipR.rotation.x = -a; u.shL.rotation.x = -a * 0.8; u.shR.rotation.x = a * 0.8;
   }
   const ent = (m, r = 0.42) => ({ mesh: m, x: 0, z: 0, y: 0, rot: 0, r, ph: 0, stun: 0, vx: 0, vz: 0 });
-  const player = ent(person({ skin: '#f1c7a4', shirt: '#1971c2', pants: '#343a40', hair: '#6b3e1f', cap: '#ffd43b', pack: '#e03131' }));
+  // Gubbarna man kan välja mellan. Klasskompisarna i ledet är de andra gubbarna.
+  const CHARS = [
+    { n: 'John', hair: '#3b2414', skin: '#f1c7a4', shirt: '#2b8a3e', stripe: '#121212', pants: '#212529' },
+    { n: 'Wille', hair: '#f1d16e', skin: '#f5d3b8', shirt: '#2f9e44', pants: '#1c7ed6' },
+    { n: 'Albin', hair: '#f1d16e', skin: '#f1c7a4', shirt: '#fcc419', stripe: '#ffffff', pants: '#f1f3f5' },
+    { n: 'Maxi', hair: '#111111', skin: '#f5d3b8', shirt: '#2b8a3e', stripe: '#111111', pants: '#111111' },
+    { n: 'August', hair: '#a57149', skin: '#f1c7a4', shirt: '#1c7ed6', stripe: '#ffffff', pants: '#343a40' },
+    { n: 'Loa', hair: '#5c3a21', skin: '#e0ac85', shirt: '#2b8a3e', stripe: '#111111', pants: '#1c3d6e' },
+    { n: 'Ebbe', hair: '#a57149', skin: '#f1c7a4', shirt: '#e03131', stripe: '#1c4fa8', pants: '#343a40' },
+    { n: 'Robin', hair: '#3b2414', skin: '#f5d3b8', shirt: '#2b8a3e', stripe: '#111111', pants: '#495057' },
+    { n: 'Lily F', hair: '#9a7450', skin: '#f5d3b8', shirt: '#8d44c9', pants: '#1c3d6e' },
+    { n: 'Edward', hair: '#7a4a24', skin: '#f1c7a4', shirt: '#2b8a3e', stripe: '#111111', pants: '#343a40' },
+    { n: 'August T', hair: '#e9c46a', skin: '#f5d3b8', shirt: '#2b8a3e', stripe: '#111111', pants: '#343a40' },
+    { n: 'Henry', hair: '#2b1d12', skin: '#f1c7a4', shirt: '#1971c2', pants: '#343a40' }
+  ];
   const teacher = ent(person({ teacher: true, skin: '#e8b996', shirt: '#7048e8', pants: '#3b2f63', hair: '#9a9a9a' }), 0.5);
   teacher.mesh.scale.setScalar(1.22);
-  const SKINS = ['#f1c7a4', '#c68e63', '#8d5a3b', '#f5d3b8', '#e0ac85'];
-  const SHIRTS = ['#e8590c', '#2f9e44', '#c2255c', '#f59f00', '#0c8599', '#5f3dc4', '#e64980'];
-  const HAIRS = ['#2b1d12', '#e9c46a', '#8b4513', '#111', '#c1440e'];
-  const students = SHIRTS.map((s, k) => ent(person({ skin: SKINS[k % 5], shirt: s, pants: k % 2 ? '#495057' : '#1c3d6e', hair: HAIRS[(k * 2) % 5], pack: ['#fab005', '#4c6ef5', '#12b886'][k % 3] })));
+  const PACKS = ['#fab005', '#4c6ef5', '#12b886', '#e03131'];
+  let chosen = 0;
+  try { const n = localStorage.getItem('smita-gubbe'); const k = CHARS.findIndex(c => c.n === n); if (k >= 0) chosen = k; } catch (e) { }
+  const player = ent(person(Object.assign({ pack: '#e03131' }, CHARS[chosen])));
+  const students = [0, 1, 2, 3, 4, 5, 6].map(k => ent(person(Object.assign({ pack: PACKS[k % 3] }, CHARS[(chosen + 1 + k) % CHARS.length]))));
+  // Byt gubbe: spelaren blir den valda, klasskompisarna slumpas bland de andra
+  function setCharacter(k) {
+    chosen = k;
+    try { localStorage.setItem('smita-gubbe', CHARS[k].n); } catch (e) { }
+    scene.remove(player.mesh); player.mesh.remove(skate);
+    player.mesh = person(Object.assign({ pack: '#e03131' }, CHARS[k])); player.mesh.add(skate);
+    const others = CHARS.filter((c, i) => i !== k).sort(() => Math.random() - 0.5);
+    students.forEach((st, i) => { scene.remove(st.mesh); st.mesh = person(Object.assign({ pack: PACKS[i % 3] }, others[i])); });
+  }
   const youLabel = label('DU', 0, 0, 0, 0.55); youLabel.material.depthTest = false; youLabel.renderOrder = 21;
   // Lärarens paraply (när det regnar)
   const umbrella = new THREE.Group();
@@ -1578,11 +1615,29 @@
     Snd.init();
     $('menu').classList.add('hidden'); $('over').classList.add('hidden');
     joy.x = joy.y = 0;
+    setCharacter(chosen);
     reset(); state = 'line';
     applyWeather();
     say('Smit från ledet när läraren inte tittar!', 2.6);
     const d = Weather.describe();
     if (Weather.info.loaded) say(d.emoji + ' ' + d.tip, 3);
+  }
+  {
+    const pk = $('picker');
+    CHARS.forEach((c, k) => {
+      const b = document.createElement('button'); b.className = 'pick'; b.type = 'button';
+      const cvs = cv(80, 96), g = cvs.getContext('2d');
+      g.fillStyle = c.pants; g.fillRect(24, 62, 32, 32);
+      g.fillStyle = c.shirt; g.fillRect(18, 38, 44, 28);
+      if (c.stripe) { g.fillStyle = c.stripe; g.fillRect(18, 44, 44, 6); g.fillRect(18, 56, 44, 6); }
+      g.fillStyle = c.skin; g.beginPath(); g.arc(40, 22, 15, 0, 7); g.fill();
+      g.fillStyle = c.hair; g.beginPath(); g.arc(40, 21, 15.5, Math.PI * 1.02, Math.PI * 1.98); g.fill();
+      const lb = document.createElement('span'); lb.textContent = c.n;
+      b.append(cvs, lb);
+      const mark = () => pk.querySelectorAll('.pick').forEach((q, i) => q.classList.toggle('on', i === chosen));
+      b.addEventListener('click', () => { chosen = k; try { localStorage.setItem('smita-gubbe', c.n); } catch (e) { } mark(); });
+      pk.append(b); mark();
+    });
   }
   $('startbtn').addEventListener('click', begin);
   $('againbtn').addEventListener('click', begin);

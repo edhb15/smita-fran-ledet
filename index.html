@@ -282,6 +282,46 @@
         margin: 0 0 18px
     }
 
+    .pickh {
+        margin: 4px 0 10px !important;
+        font-size: 22px !important;
+        color: #444 !important
+    }
+
+    #picker {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        max-width: 340px;
+        margin: 0 auto 20px
+    }
+
+    .pick {
+        font: inherit;
+        font-weight: 800;
+        font-size: 17px;
+        color: #222;
+        background: #fff;
+        border: 4px solid #e2e2e2;
+        border-radius: 16px;
+        padding: 8px 4px 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        cursor: pointer
+    }
+
+    .pick canvas {
+        width: 60px;
+        height: 72px
+    }
+
+    .pick.on {
+        border-color: #2f9e44;
+        background: #ebfbee
+    }
+
     .btn {
         font: inherit;
         font-size: 26px;
@@ -400,6 +440,8 @@
                 <li>Vädret i spelet är samma som i Göteborg just nu, och det påverkar hur bra läraren ser.</li>
                 <li>Styr: dra med fingret på skärmen (eller piltangenterna). Släpper du stannar du. Tryck på den gula knappen för att använda en grej. Tryck på minikartan för att se hela stan. 🔊 stänger av ljudet.</li>
             </ul>
+            <h2 class="pickh">Välj din gubbe</h2>
+            <div id="picker"></div>
             <button class="btn" id="startbtn">Starta!</button>
             <br>
             <a class="back" href="/">← Alla spel</a>
@@ -417,9 +459,9 @@
     </div>
 
     <script src="lib/three.min.js"></script>
-    <script src="map.js?v=7"></script>
-    <script src="audio.js?v=7"></script>
-    <script src="weather.js?v=7"></script>
-    <script src="game.js?v=7"></script>
+    <script src="map.js?v=8"></script>
+    <script src="audio.js?v=8"></script>
+    <script src="weather.js?v=8"></script>
+    <script src="game.js?v=8"></script>
 </body>
 </html>
