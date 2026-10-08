@@ -1659,7 +1659,7 @@
       const cvs = cv(80, 96), g = cvs.getContext('2d');
       g.fillStyle = c.pants; g.fillRect(24, 62, 32, 28);
       g.fillStyle = c.shoes || '#222'; g.fillRect(22, 88, 15, 6); g.fillRect(43, 88, 15, 6);
-      g.fillStyle = c.shirt; g.fillRect(18, 38, 44, 28);
+      g.fillStyle = c.shirt; g.fillRect(18, 38, 44, 28); g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = 1.5; g.strokeRect(18.75, 38.75, 42.5, 26.5);
       if (c.stripe) { g.fillStyle = c.stripe; g.fillRect(18, 44, 44, 6); g.fillRect(18, 56, 44, 6); }
       g.fillStyle = c.skin; g.beginPath(); g.arc(40, 22, 15, 0, 7); g.fill();
       g.fillStyle = c.hair; g.beginPath(); g.arc(40, 21, 15.5, Math.PI * 1.02, Math.PI * 1.98); g.fill();
