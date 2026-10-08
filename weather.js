@@ -1,6 +1,6 @@
 'use strict';
 // Hämtar vädret i Göteborg just nu från Open-Meteo (gratis, ingen nyckel).
-// Testa annat väder med t.ex. ?vader=sno, ?vader=regn&natt eller ?vader=aska.
+// Testa annat väder med t.ex. ?vader=sno, ?vader=regn&natt, #aska eller #regn-natt.
 window.Weather = (function () {
   const LAT = 57.7072, LON = 11.9668;
   const KINDS = {
@@ -32,10 +32,13 @@ window.Weather = (function () {
   function guessDay() { const h = new Date().getHours(); return h >= 7 && h < 19; }
 
   async function load() {
-    const q = new URLSearchParams(location.search), ov = q.get('vader') || q.get('weather');
+    // Väder kan också väljas med en ankarlänk, t.ex. #sno eller #regn-natt
+    const q = new URLSearchParams(location.search), h = location.hash.slice(1).toLowerCase().split('-');
+    const hk = h.find(t => KINDS[t] || ALIAS[t]);
+    const ov = q.get('vader') || q.get('weather') || hk || (h.includes('natt') ? 'clear' : null);
     if (ov) {
       info.kind = KINDS[ov] ? ov : ALIAS[ov] || 'cloudy';
-      info.day = !q.has('natt'); info.temp = info.kind === 'snow' ? -2 : 12; info.wind = info.kind === 'storm' ? 14 : 5;
+      info.day = !q.has('natt') && !h.includes('natt'); info.temp = info.kind === 'snow' ? -2 : 12; info.wind = info.kind === 'storm' ? 14 : 5;
       info.loaded = true; return info;
     }
     try {

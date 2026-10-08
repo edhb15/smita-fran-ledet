@@ -35,6 +35,8 @@ Testa annat väder med en parameter i adressen:
 - `?vader=aska`
 - `?vader=klart&natt`
 
+Det går också med en ankarlänk: `#sno`, `#regn-natt`, `#dimma`.
+
 ## Styrning
 
 - Dra med fingret på skärmen, eller använd piltangenterna/WASD. Släpper du så stannar du.
