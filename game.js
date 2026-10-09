@@ -872,10 +872,22 @@
     }
     return stripeCache[k];
   }
+  // Manchesterbyxor: tätt räfflat tyg
+  function cordTex(base) {
+    const k = 'cord' + base;
+    if (!stripeCache[k]) {
+      const c = cv(16, 16), g = c.getContext('2d');
+      g.fillStyle = base; g.fillRect(0, 0, 16, 16);
+      g.fillStyle = 'rgba(255,255,255,.13)'; for (let x = 0; x < 16; x += 4) g.fillRect(x, 0, 2, 16);
+      const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; stripeCache[k] = t;
+    }
+    return stripeCache[k];
+  }
   function person(o) {
     const g = new THREE.Group(), mats = [];
     const M = c => { const m = lam(c); mats.push(m); return m; };
-    const skin = M(o.skin), pants = M(o.pants), hair = M(o.hair), black = M('#222');
+    const skin = M(o.skin), hair = M(o.hair || o.skin), black = M('#222');
+    const pants = o.cord ? (m => { mats.push(m); return m; })(new THREE.MeshLambertMaterial({ map: cordTex(o.pants) })) : M(o.pants);
     const shirt = o.stripe ? (m => { mats.push(m); return m; })(new THREE.MeshLambertMaterial({ map: stripeTex(o.shirt, o.stripe) })) : M(o.shirt);
     const hipL = new THREE.Group(), hipR = new THREE.Group(), shL = new THREE.Group(), shR = new THREE.Group();
     hipL.position.set(-0.13, 0.68, 0); hipR.position.set(0.13, 0.68, 0);
@@ -885,7 +897,7 @@
     for (const s of [shL, shR]) { mesh(geo.arm, shirt, 0, -0.24, 0, s); mesh(geo.hand, skin, 0, -0.52, 0, s); }
     mesh(geo.body, shirt, 0, 0.98, 0, g);
     mesh(geo.head, skin, 0, 1.56, 0, g);
-    mesh(geo.hair, hair, 0, 1.58, -0.02, g);
+    if (!o.bald) mesh(geo.hair, hair, 0, 1.58, -0.02, g);
     mesh(geo.eye, black, -0.09, 1.6, 0.25, g); mesh(geo.eye, black, 0.09, 1.6, 0.25, g);
     if (o.pack) mesh(geo.pack, M(o.pack), 0, 1.0, -0.25, g);
     if (o.cap) {
@@ -933,7 +945,8 @@
     { n: 'Albert', hair: '#a57149', skin: '#f5d3b8', shirt: '#2f9e44', stripe: '#fcc419', pants: '#343a40' },
     { n: 'Marcos', hair: '#2b1d12', skin: '#e0ac85', shirt: '#2b8a3e', stripe: '#111111', pants: '#212529' },
     { n: 'Isak', hair: '#2b1d12', skin: '#f1c7a4', shirt: '#161616', pants: '#111111', shoes: '#ffffff', cap: '#161616', capBack: true, shades: true, chain: true },
-    { n: 'Philip', hair: '#f1d16e', skin: '#f5d3b8', shirt: '#f8f9fa', pants: '#8db4dc' }
+    { n: 'Philip', hair: '#f1d16e', skin: '#f5d3b8', shirt: '#f8f9fa', pants: '#8db4dc' },
+    { n: 'Valter', bald: true, skin: '#f1c7a4', shirt: '#8ec5ff', pants: '#161616', cord: true, cap: '#1c4fa8' }
   ];
   const teacher = ent(person({ teacher: true, skin: '#e8b996', shirt: '#7048e8', pants: '#3b2f63', hair: '#9a9a9a' }), 0.5);
   teacher.mesh.scale.setScalar(1.22);
@@ -1658,11 +1671,12 @@
       const b = document.createElement('button'); b.className = 'pick'; b.type = 'button';
       const cvs = cv(80, 96), g = cvs.getContext('2d');
       g.fillStyle = c.pants; g.fillRect(24, 62, 32, 28);
+      if (c.cord) { g.fillStyle = 'rgba(255,255,255,.22)'; for (let x = 26; x < 56; x += 4) g.fillRect(x, 62, 1.5, 28); }
       g.fillStyle = c.shoes || '#222'; g.fillRect(22, 88, 15, 6); g.fillRect(43, 88, 15, 6);
       g.fillStyle = c.shirt; g.fillRect(18, 38, 44, 28); g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = 1.5; g.strokeRect(18.75, 38.75, 42.5, 26.5);
       if (c.stripe) { g.fillStyle = c.stripe; g.fillRect(18, 44, 44, 6); g.fillRect(18, 56, 44, 6); }
       g.fillStyle = c.skin; g.beginPath(); g.arc(40, 22, 15, 0, 7); g.fill();
-      g.fillStyle = c.hair; g.beginPath(); g.arc(40, 21, 15.5, Math.PI * 1.02, Math.PI * 1.98); g.fill();
+      if (!c.bald) { g.fillStyle = c.hair; g.beginPath(); g.arc(40, 21, 15.5, Math.PI * 1.02, Math.PI * 1.98); g.fill(); }
       if (c.cap) { g.fillStyle = c.cap; g.beginPath(); g.arc(40, 19, 16, Math.PI, 0); g.fill(); g.fillRect(c.capBack ? 46 : 18, 15, 16, 4); }
       if (c.shades) { g.fillStyle = '#111'; g.fillRect(29, 20, 9, 5); g.fillRect(42, 20, 9, 5); g.fillRect(36, 21, 8, 2); }
       if (c.chain) { g.strokeStyle = '#f5c518'; g.lineWidth = 2.5; g.beginPath(); g.arc(40, 40, 10, 0.25, Math.PI - 0.25); g.stroke(); g.fillStyle = '#f5c518'; g.fillRect(37, 49, 6, 6); }
